@@ -1,12 +1,10 @@
 package ru.vladimir.config;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 import ru.vladimir.command.CommandProcessor;
-import ru.vladimir.model.Project;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,11 +17,7 @@ public class Config {
     private String appVersion;
 
     @Bean
-    public List<Project> projectContainer() {
-        return new ArrayList<>();
-    }
-
-    @Bean
+    @ConditionalOnProperty(name = "app.console.enabled", havingValue = "true")
     public CommandLineRunner commandScanner(CommandProcessor commandProcessor) {
         return args -> {
             try (Scanner scanner = new Scanner(System.in)) {

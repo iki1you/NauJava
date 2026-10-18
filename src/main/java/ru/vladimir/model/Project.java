@@ -2,12 +2,39 @@ package ru.vladimir.model;
 
 import java.time.Instant;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.ColumnDefault;
+
+@Entity
+@Table(name = "projects")
 public class Project implements HasId, SoftDeletable {
+    @Id
+    @GeneratedValue
     private Long id;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(columnDefinition = "text")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @ColumnDefault("'NEW'")
     private ProjectStatus status = ProjectStatus.NEW;
+
+    @Column(name = "created_at", nullable = false)
+    @ColumnDefault("now()")
     private Instant createdAt = Instant.now();
+
+    @Column(name = "deleted_at")
     private Instant deletedAt;
 
     @Override
