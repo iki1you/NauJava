@@ -1,6 +1,8 @@
 package ru.vladimir.service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import jakarta.annotation.PostConstruct;
 import ru.vladimir.config.Config;
@@ -29,35 +31,38 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = new Project();
         project.setName(name);
         project.setDescription(description);
-        projectRepository.create(project);
+        projectRepository.save(project);
     }
 
     @Override
     public Project findById(Long id) {
-        return projectRepository.read(id);
+        return projectRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new NoSuchElementException("Project not found: " + id));
     }
 
     @Override
     public List<Project> findAll() {
-        return projectRepository.readAll();
+        return projectRepository.findAllByDeletedAtIsNull();
     }
 
     @Override
     public List<Project> findAllByStatus(ProjectStatus status) {
-        return projectRepository.readAllByStatus(status);
+        return projectRepository.findAllByStatusAndDeletedAtIsNull(status);
     }
 
     @Override
     public void updateProject(Long id, String name, String description, ProjectStatus status) {
-        Project project = projectRepository.read(id);
+        Project project = findById(id);
         project.setName(name);
         project.setDescription(description);
         project.setStatus(status);
-        projectRepository.update(project);
+        projectRepository.save(project);
     }
 
     @Override
     public void deleteById(Long id) {
-        projectRepository.delete(id);
+        Project project = findById(id);
+        project.setDeletedAt(Instant.now());
+        projectRepository.save(project);
     }
 }

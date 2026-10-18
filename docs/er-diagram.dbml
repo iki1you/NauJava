@@ -1,0 +1,140 @@
+Project nau_db {
+  database_type: 'PostgreSQL'
+  Note: 'Система управления проектами'
+}
+
+Table users {
+  id bigint [pk, increment, not null]
+  login varchar(50) [not null, unique]
+  password_hash varchar(255) [not null]
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+
+  Note: 'Пользователи системы. Вход по логину.'
+}
+
+Table departments {
+  id bigint [pk, increment, not null]
+  name varchar(100) [not null]
+  code varchar(30) [not null, unique]
+  description text [null]
+
+  Note: 'Отделы компании'
+}
+
+Table user_departments {
+  id bigint [pk, increment, not null]
+  user_id bigint [not null]
+  department_id bigint [not null]
+  position varchar(100) [not null]
+  joined_at timestamptz [not null, default: `now()`]
+  status varchar(20) [not null, default: 'ACTIVE']
+
+  indexes {
+    (user_id, department_id) [unique]
+  }
+
+  checks {
+    `status IN ('ACTIVE', 'LEFT')`
+  }
+
+  Note: '''
+    Участие пользователя в отделе.
+    Пользователь может состоять в нескольких отделах.
+    Бизнес-правило: каждый пользователь должен иметь
+    хотя бы одно активное участие в отделе.
+    Основной отдел не выделяется.
+  '''
+}
+
+Table projects {
+  id bigint [pk, increment, not null]
+  name varchar(255) [not null]
+  description text [null]
+  status varchar(20) [not null, default: 'NEW']
+  created_at timestamptz [not null, default: `now()`]
+  deleted_at timestamptz [null]
+
+  checks {
+    `status IN ('NEW', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')`
+  }
+
+  Note: '''
+    Проекты.
+    При мягком удалении заполняется deleted_at.
+  '''
+}
+
+Table project_members {
+  id bigint [pk, increment, not null]
+  project_id bigint [not null]
+  user_id bigint [not null]
+  role varchar(20) [not null, default: 'MEMBER']
+  joined_at timestamptz [not null, default: `now()`]
+  status varchar(20) [not null, default: 'ACTIVE']
+
+  indexes {
+    (project_id, user_id) [unique]
+  }
+
+  checks {
+    `role IN ('MANAGER', 'MEMBER')`
+    `status IN ('ACTIVE', 'LEFT')`
+  }
+
+  Note: '''
+    Участие пользователя в проекте.
+    MANAGER — руководитель, MEMBER — участник.
+    Роль пользователя может различаться в разных проектах.
+  '''
+}
+
+Table tasks {
+  id bigint [pk, increment, not null]
+  project_id bigint [not null]
+  assignee_id bigint [null]
+  title varchar(255) [not null]
+  description text [null]
+  status varchar(20) [not null, default: 'NEW']
+  priority varchar(20) [not null, default: 'MEDIUM']
+  due_date date [null]
+  created_at timestamptz [not null, default: `now()`]
+
+  checks {
+    `status IN ('NEW', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')`
+    `priority IN ('LOW', 'MEDIUM', 'HIGH')`
+  }
+
+  Note: '''
+    Задачи проекта.
+    Исполнитель один или отсутствует.
+    Бизнес-правило: назначать задачу можно только
+    активному участнику соответствующего проекта.
+  '''
+}
+
+Table comments {
+  id bigint [pk, increment, not null]
+  task_id bigint [not null]
+  author_id bigint [not null]
+  text text [not null]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [null]
+
+  Note: '''
+    Комментарии пользователей к задачам.
+    updated_at заполняется при редактировании.
+  '''
+}
+
+Ref: user_departments.user_id > users.id
+Ref: user_departments.department_id > departments.id
+
+Ref: project_members.project_id > projects.id
+Ref: project_members.user_id > users.id
+
+Ref: tasks.project_id > projects.id
+Ref: tasks.assignee_id > users.id
+
+Ref: comments.task_id > tasks.id
+Ref: comments.author_id > users.id
