@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.vladimir.model.Comment;
 import ru.vladimir.model.Project;
 import ru.vladimir.model.Task;
@@ -41,6 +42,9 @@ class TaskCreationServiceTest {
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private Project project;
     private User author;
 
@@ -54,7 +58,7 @@ class TaskCreationServiceTest {
 
         author = new User();
         author.setLogin(name);
-        author.setPasswordHash("test-hash");
+        author.setPasswordHash(passwordEncoder.encode("test-password"));
         author.setFirstName("Test");
         author.setLastName("User");
         userRepository.save(author);
